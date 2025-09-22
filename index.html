@@ -1,207 +1,441 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Teacher Tech Championship</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background:#f7f7f7;}
-    h2 { margin-top: 30px; }
-    .hidden { display: none; }
-    table { border-collapse: collapse; width: 100%; margin-top:10px; background:#fff; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-    th { background: #eee; }
-    input[type=number] { width: 80px; }
-    input[type=text] { width: 150px; }
-    .warning { color: red; font-weight: bold; }
-    .card { background:#fff; padding:15px; margin-bottom:15px; border-radius:5px; box-shadow:0 2px 4px rgba(0,0,0,0.1);}
-    button { padding:8px 15px; margin-top:10px; }
-  </style>
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
+<body class="bg-slate-50 text-slate-800">
+  <div class="max-w-6xl mx-auto p-6">
+    <header class="mb-6">
+      <h1 class="text-2xl md:text-3xl font-bold">Teacher Tech Championship</h1>
+      <p class="text-slate-600">Modul Input Data • Penjurian • Rekap</p>
+    </header>
 
-  <h1>Teacher Tech Championship</h1>
-
-  <!-- Modul 1: Input Data -->
-  <div id="modul1" class="card">
-    <h2>Modul 1: Input Data</h2>
-    <label>Jumlah Sekolah: <input type="number" id="jumlahSekolah" min="1" value="2"></label>
-    <button onclick="buatFormSekolah()">Buat Form Sekolah</button>
-    <div id="daftarSekolah"></div>
-
-    <label>Jumlah Aspek Penilaian: <input type="number" id="jumlahAspek" min="1" value="2"></label>
-    <button onclick="buatFormAspek()">Buat Form Aspek</button>
-    <div id="daftarAspek"></div>
-
-    <label>Jumlah Juri: <input type="number" id="jumlahJuri" min="1" value="2"></label><br>
-    <button onclick="simpanKonfigurasi()">Simpan Konfigurasi</button>
-    <p id="peringatanBobot" class="warning"></p>
-  </div>
-
-  <!-- Modul 2: Penjurian -->
-  <div id="modul2" class="card hidden">
-    <h2>Modul 2: Penjurian</h2>
-    <label>Nama Juri: <input type="text" id="namaJuri"></label>
-    <button onclick="mulaiPenjurian()">Mulai</button>
-    <div id="formPenjurian"></div>
-    <div>
-      <h3>Keterangan Nilai:</h3>
-      <ul>
-        <li>100–90: Istimewa</li>
-        <li>89–80: Baik Sekali</li>
-        <li>79–70: Baik</li>
-        <li>69–60: Cukup</li>
-        <li>59–50: Kurang</li>
-        <li>&lt;49: Kurang Sekali</li>
-      </ul>
+    <!-- Tabs -->
+    <div class="mb-4 border-b border-slate-200">
+      <nav class="-mb-px flex gap-6 text-sm">
+        <button id="tab-config" class="tab-btn border-b-2 border-indigo-600 text-indigo-600 py-3 font-medium">1) Input Data</button>
+        <button id="tab-judge"  class="tab-btn border-b-2 border-transparent hover:text-indigo-600 py-3">2) Penjurian</button>
+        <button id="tab-recap"  class="tab-btn border-b-2 border-transparent hover:text-indigo-600 py-3">3) Rekap</button>
+      </nav>
     </div>
+
+    <!-- Alert -->
+    <div id="toast" class="hidden rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-900 px-4 py-3 mb-4 text-sm"></div>
+
+    <!-- ===================== MODUL 1: CONFIG ===================== -->
+    <section id="panel-config" class="space-y-6">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h2 class="text-lg font-semibold mb-4">A. Daftar Sekolah & Wilayah</h2>
+
+        <div class="flex items-end gap-3 mb-4">
+          <label class="block">
+            <span class="text-sm">Jumlah Sekolah</span>
+            <input id="jumlahSekolah" type="number" min="1" value="4" class="mt-1 w-40 rounded-md border-slate-300 focus:border-indigo-500 focus:ring-indigo-500"/>
+          </label>
+          <button id="btn-gen-sekolah" class="rounded-md bg-slate-800 hover:bg-slate-900 text-white px-4 py-2">Buat Form</button>
+        </div>
+
+        <div id="daftarSekolah" class="grid md:grid-cols-2 gap-3"></div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h2 class="text-lg font-semibold mb-4">B. Aspek Penilaian & Bobot</h2>
+
+        <div class="flex items-end gap-3 mb-4">
+          <label class="block">
+            <span class="text-sm">Jumlah Aspek</span>
+            <input id="jumlahAspek" type="number" min="1" value="4" class="mt-1 w-40 rounded-md border-slate-300 focus:border-indigo-500 focus:ring-indigo-500"/>
+          </label>
+          <button id="btn-gen-aspek" class="rounded-md bg-slate-800 hover:bg-slate-900 text-white px-4 py-2">Buat Form</button>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="min-w-full text-sm border border-slate-200 rounded-lg overflow-hidden">
+            <thead class="bg-slate-50">
+              <tr>
+                <th class="px-3 py-2 text-left">#</th>
+                <th class="px-3 py-2 text-left">Nama Aspek</th>
+                <th class="px-3 py-2 text-left">Bobot (%)</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyAspek" class="[&_tr:nth-child(even)]:bg-slate-50"></tbody>
+            <tfoot class="bg-slate-100">
+              <tr>
+                <td class="px-3 py-2 font-medium" colspan="2">Total Bobot</td>
+                <td class="px-3 py-2 font-semibold">
+                  <span id="totalBobot">0</span>%
+                  <span id="warnBobot" class="ml-2 text-xs font-medium"></span>
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h2 class="text-lg font-semibold mb-4">C. Jumlah Juri & Simpan</h2>
+
+        <div class="flex items-center gap-4 mb-3">
+          <label class="block">
+            <span class="text-sm">Jumlah Juri</span>
+            <input id="jumlahJuri" type="number" min="1" value="3" class="mt-1 w-40 rounded-md border-slate-300 focus:border-indigo-500 focus:ring-indigo-500"/>
+          </label>
+        </div>
+
+        <div class="flex flex-wrap gap-3">
+          <button id="btn-save-config" class="rounded-md bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2">Simpan Konfigurasi</button>
+          <button id="btn-reset" class="rounded-md border border-slate-300 hover:bg-slate-50 px-4 py-2">Reset Semua Data</button>
+        </div>
+        <p class="text-xs text-slate-500 mt-2">Catatan: konfigurasi & nilai akan disimpan di <em>LocalStorage</em> agar bisa dilanjutkan nanti.</p>
+      </div>
+    </section>
+
+    <!-- ===================== MODUL 2: JUDGING ===================== -->
+    <section id="panel-judge" class="hidden space-y-6">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h2 class="text-lg font-semibold mb-4">A. Identitas Juri</h2>
+        <div class="flex items-end gap-3">
+          <label class="block">
+            <span class="text-sm">Nama Juri</span>
+            <input id="namaJuri" type="text" placeholder="cth: Rina Andini" class="mt-1 w-64 rounded-md border-slate-300 focus:border-indigo-500 focus:ring-indigo-500"/>
+          </label>
+          <button id="btn-start-judge" class="rounded-md bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2">Mulai</button>
+        </div>
+      </div>
+
+      <div id="keteranganNilai" class="bg-amber-50 border border-amber-200 text-amber-900 rounded-xl p-4 text-sm">
+        <strong>Keterangan Nilai:</strong>
+        <span class="ml-2">100–90: Istimewa</span> ·
+        <span>89–80: Baik Sekali</span> ·
+        <span>79–70: Baik</span> ·
+        <span>69–60: Cukup</span> ·
+        <span>59–50: Kurang</span> ·
+        <span>&lt;49: Kurang Sekali</span>
+      </div>
+
+      <div id="formPenjurian"></div>
+    </section>
+
+    <!-- ===================== MODUL 3: RECAP ===================== -->
+    <section id="panel-recap" class="hidden space-y-4">
+      <div class="flex gap-3">
+        <button id="btn-show-recap" class="rounded-md bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2">Tampilkan Rekap</button>
+        <button id="btn-clear-judge" class="rounded-md border border-slate-300 hover:bg-slate-50 px-4 py-2">Hapus Semua Nilai Juri</button>
+      </div>
+      <div id="rekapTabel"></div>
+      <p class="text-xs text-slate-500">⚠️ Baris dengan deviasi standar &gt; 5 diberi penanda.</p>
+    </section>
   </div>
 
-  <!-- Modul 3: Rekap -->
-  <div id="modul3" class="card hidden">
-    <h2>Modul 3: Rekap Penilaian</h2>
-    <button onclick="tampilkanRekap()">Tampilkan Rekap</button>
-    <div id="rekapTabel"></div>
-  </div>
+  <script>
+    // ------- Helpers
+    const $ = (sel) => document.querySelector(sel);
+    const el = (html) => { const d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstChild; };
+    const showToast = (msg, ok=true) => {
+      const t = $('#toast'); t.classList.remove('hidden');
+      t.className = "rounded-lg px-4 py-3 mb-4 text-sm " + (ok? "bg-emerald-50 border border-emerald-200 text-emerald-900" : "bg-rose-50 border border-rose-200 text-rose-900");
+      t.textContent = msg; setTimeout(()=> t.classList.add('hidden'), 2500);
+    };
+    const getConfig = () => JSON.parse(localStorage.getItem('TTC_config') || 'null');
+    const saveConfig = (cfg) => localStorage.setItem('TTC_config', JSON.stringify(cfg));
+    const scoreKey = (juri) => `TTC_scores_${juri}`;
 
-<script>
-let config = null;
+    // ------- Tabs
+    const panels = {
+      config: $('#panel-config'),
+      judge:  $('#panel-judge'),
+      recap:  $('#panel-recap'),
+    };
+    const switchTab = (name) => {
+      Object.values(panels).forEach(p => p.classList.add('hidden'));
+      panels[name].classList.remove('hidden');
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('border-indigo-600','text-indigo-600'));
+      if(name==='config') $('#tab-config').classList.add('border-indigo-600','text-indigo-600');
+      if(name==='judge')  $('#tab-judge').classList.add('border-indigo-600','text-indigo-600');
+      if(name==='recap')  $('#tab-recap').classList.add('border-indigo-600','text-indigo-600');
+    };
+    $('#tab-config').onclick = ()=> switchTab('config');
+    $('#tab-judge').onclick  = ()=> switchTab('judge');
+    $('#tab-recap').onclick  = ()=> switchTab('recap');
 
-// ===== Modul 1 =====
-function buatFormSekolah() {
-  let jumlah = document.getElementById("jumlahSekolah").value;
-  let html = "<h3>Daftar Sekolah</h3>";
-  for (let i=0;i<jumlah;i++) {
-    html += `Sekolah ${i+1}: <input type="text" id="sekolah${i}" placeholder="Nama"> 
-             Wilayah: <input type="text" id="wilayah${i}" placeholder="Wilayah"><br>`;
-  }
-  document.getElementById("daftarSekolah").innerHTML = html;
-}
-
-function buatFormAspek() {
-  let jumlah = document.getElementById("jumlahAspek").value;
-  let html = "<h3>Daftar Aspek</h3><table><tr><th>Aspek</th><th>Bobot (%)</th></tr>";
-  for (let i=0;i<jumlah;i++) {
-    html += `<tr><td><input type="text" id="aspek${i}" placeholder="Nama Aspek"></td>
-             <td><input type="number" id="bobot${i}" min="0" max="100"></td></tr>`;
-  }
-  html += "</table>";
-  document.getElementById("daftarAspek").innerHTML = html;
-}
-
-function simpanKonfigurasi() {
-  let jumlahSekolah = document.getElementById("jumlahSekolah").value;
-  let sekolahs = [];
-  for (let i=0;i<jumlahSekolah;i++) {
-    sekolahs.push({nama: document.getElementById("sekolah"+i).value,
-                   wilayah: document.getElementById("wilayah"+i).value});
-  }
-  let jumlahAspek = document.getElementById("jumlahAspek").value;
-  let aspek = [];
-  let totalBobot = 0;
-  for (let i=0;i<jumlahAspek;i++) {
-    let nama = document.getElementById("aspek"+i).value;
-    let bobot = parseFloat(document.getElementById("bobot"+i).value);
-    totalBobot += bobot;
-    aspek.push({nama, bobot});
-  }
-  if (totalBobot !== 100) {
-    document.getElementById("peringatanBobot").innerText = "Total bobot harus 100%!";
-    return;
-  } else {
-    document.getElementById("peringatanBobot").innerText = "";
-  }
-  let jumlahJuri = document.getElementById("jumlahJuri").value;
-  config = {sekolahs, aspek, jumlahJuri};
-  localStorage.setItem("TTC_config", JSON.stringify(config));
-  alert("Konfigurasi tersimpan!");
-  document.getElementById("modul2").classList.remove("hidden");
-  document.getElementById("modul3").classList.remove("hidden");
-}
-
-// ===== Modul 2 =====
-function mulaiPenjurian() {
-  let namaJuri = document.getElementById("namaJuri").value;
-  if (!namaJuri) { alert("Masukkan nama juri!"); return; }
-  if (!config) { config = JSON.parse(localStorage.getItem("TTC_config")); }
-  let html = `<h3>Penilaian oleh ${namaJuri}</h3><table><tr><th>Sekolah</th>`;
-  config.aspek.forEach(a => html += `<th>${a.nama} (${a.bobot}%)</th>`);
-  html += "<th>Total</th></tr>";
-  config.sekolahs.forEach((s, idxS) => {
-    html += `<tr><td>${s.nama} (${s.wilayah})</td>`;
-    config.aspek.forEach((a, idxA) => {
-      html += `<td><input type="number" min="0" max="100" 
-                onchange="hitungTotal('${namaJuri}',${idxS})" 
-                id="nilai_${namaJuri}_${idxS}_${idxA}"></td>`;
-    });
-    html += `<td id="total_${namaJuri}_${idxS}">0</td></tr>`;
-  });
-  html += "</table><button onclick=\"simpanNilai('${namaJuri}')\">Simpan Nilai</button>";
-  document.getElementById("formPenjurian").innerHTML = html;
-}
-
-function hitungTotal(namaJuri, idxSekolah) {
-  let total = 0;
-  config.aspek.forEach((a, idxA) => {
-    let v = parseFloat(document.getElementById(`nilai_${namaJuri}_${idxSekolah}_${idxA}`).value) || 0;
-    total += v * (a.bobot/100);
-  });
-  document.getElementById(`total_${namaJuri}_${idxSekolah}`).innerText = total.toFixed(2);
-}
-
-function simpanNilai(namaJuri) {
-  let data = {namaJuri, nilai: []};
-  config.sekolahs.forEach((s, idxS) => {
-    let aspekNilai = {};
-    config.aspek.forEach((a, idxA) => {
-      aspekNilai[a.nama] = parseFloat(document.getElementById(`nilai_${namaJuri}_${idxS}_${idxA}`).value) || 0;
-    });
-    aspekNilai["total"] = parseFloat(document.getElementById(`total_${namaJuri}_${idxS}`).innerText);
-    data.nilai.push({sekolah: s.nama, nilai: aspekNilai});
-  });
-  localStorage.setItem("TTC_scores_"+namaJuri, JSON.stringify(data));
-  alert("Nilai juri tersimpan!");
-}
-
-// ===== Modul 3 =====
-function tampilkanRekap() {
-  if (!config) { config = JSON.parse(localStorage.getItem("TTC_config")); }
-  let html = "<table><tr><th>Sekolah</th>";
-  // Ambil nama juri
-  let juriKeys = [];
-  for (let i=0;i<localStorage.length;i++) {
-    let key = localStorage.key(i);
-    if (key.startsWith("TTC_scores_")) { juriKeys.push(key); }
-  }
-  let juriNames = juriKeys.map(k => k.replace("TTC_scores_",""));
-  juriNames.forEach(j => html += `<th>${j}</th>`);
-  html += "<th>Warning</th></tr>";
-
-  config.sekolahs.forEach((s, idxS) => {
-    let row = `<tr><td>${s.nama}</td>`;
-    let totals = [];
-    juriNames.forEach(j => {
-      let data = JSON.parse(localStorage.getItem("TTC_scores_"+j));
-      if (data) {
-        let nilaiSekolah = data.nilai.find(n => n.sekolah===s.nama);
-        let tot = nilaiSekolah? nilaiSekolah.nilai.total : 0;
-        totals.push(tot);
-        row += `<td>${tot}</td>`;
+    // ------- Modul 1: generate inputs
+    const renderSekolahInputs = (n) => {
+      const wrap = $('#daftarSekolah'); wrap.innerHTML = '';
+      for (let i=0;i<n;i++){
+        wrap.appendChild(el(`
+          <div class="grid grid-cols-2 gap-2 bg-slate-50 border border-slate-200 rounded-lg p-3">
+            <label class="text-sm">Nama Sekolah
+              <input id="sekolah${i}" type="text" class="mt-1 w-full rounded-md border-slate-300 focus:border-indigo-500 focus:ring-indigo-500" placeholder="Sekolah ${i+1}">
+            </label>
+            <label class="text-sm">Wilayah
+              <input id="wilayah${i}" type="text" class="mt-1 w-full rounded-md border-slate-300 focus:border-indigo-500 focus:ring-indigo-500" placeholder="Wilayah">
+            </label>
+          </div>`));
       }
-    });
-    let warning = "";
-    if (totals.length>1) {
-      let avg = totals.reduce((a,b)=>a+b,0)/totals.length;
-      let variance = totals.reduce((a,b)=>a+(b-avg)**2,0)/totals.length;
-      let sd = Math.sqrt(variance);
-      if (sd>5) warning="⚠️ SD > 5";
-    }
-    row += `<td>${warning}</td></tr>`;
-    html += row;
-  });
+    };
+    const renderAspekInputs = (n) => {
+      const tbody = $('#tbodyAspek'); tbody.innerHTML = '';
+      for (let i=0;i<n;i++){
+        const row = el(`
+          <tr>
+            <td class="px-3 py-2">${i+1}</td>
+            <td class="px-3 py-2"><input id="aspek${i}" type="text" placeholder="Aspek ${i+1}" class="w-full rounded-md border-slate-300 focus:border-indigo-500 focus:ring-indigo-500"/></td>
+            <td class="px-3 py-2"><input id="bobot${i}" type="number" min="0" max="100" step="1" class="w-28 rounded-md border-slate-300 focus:border-indigo-500 focus:ring-indigo-500"/></td>
+          </tr>`);
+        tbody.appendChild(row);
+      }
+      // listen changes for total weight
+      tbody.querySelectorAll('input[type=number]').forEach(inp => inp.addEventListener('input', updateTotalBobot));
+      updateTotalBobot();
+    };
+    const updateTotalBobot = () => {
+      const n = parseInt($('#jumlahAspek').value || '0', 10);
+      let sum = 0;
+      for(let i=0;i<n;i++){ sum += parseFloat($('#bobot'+i)?.value || '0'); }
+      $('#totalBobot').textContent = (isNaN(sum)?0:sum);
+      const warn = $('#warnBobot');
+      warn.textContent = (sum===100? '✓ valid' : 'Total harus 100%');
+      warn.className = 'ml-2 text-xs font-medium ' + (sum===100?'text-emerald-700':'text-rose-700');
+    };
 
-  html += "</table>";
-  document.getElementById("rekapTabel").innerHTML = html;
-}
-</script>
+    // generate default forms
+    $('#btn-gen-sekolah').onclick = ()=> renderSekolahInputs(parseInt($('#jumlahSekolah').value||'0',10));
+    $('#btn-gen-aspek').onclick   = ()=> renderAspekInputs(parseInt($('#jumlahAspek').value||'0',10));
+
+    // load config if exists
+    (function initConfig(){
+      const cfg = getConfig();
+      if(cfg){
+        $('#jumlahSekolah').value = cfg.sekolahs.length;
+        renderSekolahInputs(cfg.sekolahs.length);
+        cfg.sekolahs.forEach((s,i)=>{ $('#sekolah'+i).value=s.nama; $('#wilayah'+i).value=s.wilayah; });
+
+        $('#jumlahAspek').value = cfg.aspek.length;
+        renderAspekInputs(cfg.aspek.length);
+        cfg.aspek.forEach((a,i)=>{ $('#aspek'+i).value=a.nama; $('#bobot'+i).value=a.bobot; });
+        updateTotalBobot();
+
+        $('#jumlahJuri').value = cfg.jumlahJuri || 1;
+        showToast('Konfigurasi dimuat dari LocalStorage');
+      }else{
+        // first-time defaults
+        renderSekolahInputs(parseInt($('#jumlahSekolah').value,10));
+        renderAspekInputs(parseInt($('#jumlahAspek').value,10));
+      }
+    })();
+
+    // save config
+    $('#btn-save-config').onclick = ()=>{
+      const nSek = parseInt($('#jumlahSekolah').value||'0',10);
+      const sekolahs = [];
+      for(let i=0;i<nSek;i++){
+        const nama = $('#sekolah'+i)?.value?.trim()||'';
+        const wilayah = $('#wilayah'+i)?.value?.trim()||'';
+        if(!nama || !wilayah){ showToast('Nama sekolah & wilayah wajib diisi', false); return; }
+        sekolahs.push({nama, wilayah});
+      }
+      const nAsp = parseInt($('#jumlahAspek').value||'0',10);
+      const aspek = [];
+      let sum = 0;
+      for(let i=0;i<nAsp;i++){
+        const nama = $('#aspek'+i)?.value?.trim()||'';
+        const bobot = parseFloat($('#bobot'+i)?.value||'0');
+        if(!nama){ showToast('Nama aspek tidak boleh kosong', false); return; }
+        if(isNaN(bobot)){ showToast('Bobot harus angka', false); return; }
+        aspek.push({nama, bobot});
+        sum += bobot;
+      }
+      if(sum!==100){ showToast('Total bobot harus = 100%', false); return; }
+      const jumlahJuri = Math.max(1, parseInt($('#jumlahJuri').value||'1',10));
+      saveConfig({sekolahs, aspek, jumlahJuri});
+      showToast('Konfigurasi tersimpan ✓');
+    };
+
+    // reset all
+    $('#btn-reset').onclick = ()=>{
+      if(!confirm('Hapus semua data (config & nilai juri)?')) return;
+      const keys = Object.keys(localStorage);
+      keys.forEach(k=>{
+        if(k.startsWith('TTC_')) localStorage.removeItem(k);
+      });
+      location.reload();
+    };
+
+    // ------- Modul 2: judging
+    $('#btn-start-judge').onclick = ()=>{
+      const cfg = getConfig();
+      if(!cfg){ showToast('Konfigurasi belum disimpan', false); switchTab('config'); return; }
+      const nama = $('#namaJuri').value.trim();
+      if(!nama){ showToast('Nama juri wajib diisi', false); return; }
+
+      // Render table
+      const wrap = $('#formPenjurian'); wrap.innerHTML='';
+      const tbl = el(`<div class="overflow-x-auto"><table class="min-w-full text-sm border border-slate-200 rounded-lg overflow-hidden">
+        <thead class="bg-slate-50">
+          <tr>
+            <th class="px-3 py-2 text-left">Sekolah</th>
+            ${cfg.aspek.map(a=>`<th class="px-3 py-2 text-left">${a.nama} <span class="text-xs text-slate-500">(${a.bobot}%)</span></th>`).join('')}
+            <th class="px-3 py-2 text-left">Total</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyJudge" class="[&_tr:nth-child(even)]:bg-slate-50"></tbody>
+      </table></div>
+      <div class="mt-3 flex gap-3">
+        <button id="btn-save-judge" class="rounded-md bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2">Simpan Nilai</button>
+        <span class="text-xs text-slate-500">Autosave aktif saat Anda mengetik.</span>
+      </div>`);
+      wrap.appendChild(tbl);
+
+      const body = tbl.querySelector('#tbodyJudge');
+
+      // load draft if any
+      const draft = JSON.parse(localStorage.getItem(scoreKey(nama))||'null');
+
+      cfg.sekolahs.forEach((s, idxS)=>{
+        const row = el(`<tr>
+          <td class="px-3 py-2 whitespace-nowrap">${s.nama} <span class="text-xs text-slate-500">(${s.wilayah})</span></td>
+          ${cfg.aspek.map((a, idxA)=>`
+            <td class="px-3 py-2">
+              <input type="number" min="0" max="100" step="1"
+                     class="w-24 rounded-md border-slate-300 focus:border-indigo-500 focus:ring-indigo-500"
+                     id="nilai_${idxS}_${idxA}">
+              <div class="text-[11px] text-slate-500 mt-1" id="pred_${idxS}_${idxA}"></div>
+            </td>`).join('')}
+          <td class="px-3 py-2 font-medium" id="total_${idxS}">0.00</td>
+        </tr>`);
+        body.appendChild(row);
+
+        // populate from draft
+        if(draft && draft.nilai){
+          const rec = draft.nilai.find(n => n.sekolah===s.nama);
+          if(rec){
+            cfg.aspek.forEach((a,idxA)=>{
+              const v = rec.nilai[a.nama] ?? '';
+              const inp = $(`#nilai_${idxS}_${idxA}`); inp.value = v;
+            });
+            $(`#total_${idxS}`).textContent = (rec.nilai.total ?? 0).toFixed(2);
+          }
+        }
+
+        // listeners
+        cfg.aspek.forEach((a, idxA)=>{
+          $(`#nilai_${idxS}_${idxA}`).addEventListener('input', ()=>{
+            // clamp 0..100
+            let v = parseFloat($(`#nilai_${idxS}_${idxA}`).value || '0');
+            if(v<0) v=0; if(v>100) v=100;
+            $(`#nilai_${idxS}_${idxA}`).value = v;
+
+            // kategori label
+            const pred = (v>=90)?'Istimewa':(v>=80)?'Baik Sekali':(v>=70)?'Baik':(v>=60)?'Cukup':(v>=50)?'Kurang':'Kurang Sekali';
+            $(`#pred_${idxS}_${idxA}`).textContent = pred;
+
+            // recompute row total
+            let total=0;
+            cfg.aspek.forEach((aa,ii)=>{
+              const val = parseFloat($(`#nilai_${idxS}_${ii}`).value || '0');
+              total += val*(aa.bobot/100);
+            });
+            $(`#total_${idxS}`).textContent = total.toFixed(2);
+
+            // autosave
+            saveJudge(nama, false);
+          });
+        });
+      });
+
+      // save button
+      $('#btn-save-judge').onclick = ()=> saveJudge(nama, true);
+      switchTab('judge');
+      showToast(`Form penjurian untuk ${nama} siap`);
+    };
+
+    function saveJudge(nama, notify){
+      const cfg = getConfig(); if(!cfg) return;
+      const data = { namaJuri: nama, nilai: [] };
+      cfg.sekolahs.forEach((s, idxS)=>{
+        const pack = { sekolah: s.nama, nilai: {} };
+        let total = 0;
+        cfg.aspek.forEach((a, idxA)=>{
+          const v = parseFloat($(`#nilai_${idxS}_${idxA}`)?.value || '0');
+          pack.nilai[a.nama] = v;
+          total += v*(a.bobot/100);
+        });
+        pack.nilai.total = parseFloat(total.toFixed(2));
+        data.nilai.push(pack);
+      });
+      localStorage.setItem(scoreKey(nama), JSON.stringify(data));
+      if(notify) showToast('Nilai juri tersimpan ✓');
+    }
+
+    // ------- Modul 3: recap
+    $('#btn-show-recap').onclick = ()=>{
+      const cfg = getConfig();
+      if(!cfg){ showToast('Konfigurasi belum ada', false); switchTab('config'); return; }
+
+      const juriNames = [];
+      for(let i=0;i<localStorage.length;i++){
+        const k = localStorage.key(i);
+        if(k.startsWith('TTC_scores_')) juriNames.push(k.replace('TTC_scores_',''));
+      }
+      if(juriNames.length===0){ showToast('Belum ada nilai juri', false); return; }
+
+      // build table
+      const wrap = $('#rekapTabel'); wrap.innerHTML='';
+      const tbl = el(`<div class="overflow-x-auto">
+        <table class="min-w-full text-sm border border-slate-200 rounded-lg overflow-hidden">
+          <thead class="bg-slate-50">
+            <tr>
+              <th class="px-3 py-2 text-left">Sekolah</th>
+              ${juriNames.map(n=>`<th class="px-3 py-2 text-left">${n}</th>`).join('')}
+              <th class="px-3 py-2 text-left">Rata-rata</th>
+              <th class="px-3 py-2 text-left">SD</th>
+              <th class="px-3 py-2 text-left">Warning</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyRecap" class="[&_tr:nth-child(even)]:bg-slate-50"></tbody>
+        </table>
+      </div>`);
+      wrap.appendChild(tbl);
+
+      const body = tbl.querySelector('#tbodyRecap');
+
+      cfg.sekolahs.forEach((s)=>{
+        const totals = juriNames.map(n=>{
+          const rec = JSON.parse(localStorage.getItem(scoreKey(n))||'null');
+          if(!rec) return 0;
+          const row = rec.nilai.find(r=>r.sekolah===s.nama);
+          return row ? (row.nilai.total||0) : 0;
+        });
+        const avg = totals.reduce((a,b)=>a+b,0)/totals.length;
+        const variance = totals.reduce((a,b)=> a + Math.pow(b-avg,2), 0)/totals.length;
+        const sd = Math.sqrt(variance);
+        const warn = sd>5 ? '⚠️ SD > 5' : '';
+
+        const tr = el(`<tr class="${sd>5?'bg-amber-50':''}">
+          <td class="px-3 py-2 whitespace-nowrap">${s.nama}</td>
+          ${totals.map(t=>`<td class="px-3 py-2">${t.toFixed(2)}</td>`).join('')}
+          <td class="px-3 py-2 font-medium">${avg.toFixed(2)}</td>
+          <td class="px-3 py-2">${sd.toFixed(2)}</td>
+          <td class="px-3 py-2">${warn}</td>
+        </tr>`);
+        body.appendChild(tr);
+      });
+
+      switchTab('recap');
+    };
+
+    // clear judges scores only
+    $('#btn-clear-judge').onclick = ()=>{
+      if(!confirm('Hapus semua nilai juri (config tetap ada)?')) return;
+      const keys = Object.keys(localStorage);
+      keys.forEach(k=>{ if(k.startsWith('TTC_scores_')) localStorage.removeItem(k); });
+      $('#rekapTabel').innerHTML = '';
+      showToast('Semua nilai juri dihapus');
+    };
+  </script>
 </body>
 </html>
