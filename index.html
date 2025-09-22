@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Teacher Tech Championship</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background:#f7f7f7;}
+    h2 { margin-top: 30px; }
+    .hidden { display: none; }
+    table { border-collapse: collapse; width: 100%; margin-top:10px; background:#fff; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background: #eee; }
+    input[type=number] { width: 80px; }
+    input[type=text] { width: 150px; }
+    .warning { color: red; font-weight: bold; }
+    .card { background:#fff; padding:15px; margin-bottom:15px; border-radius:5px; box-shadow:0 2px 4px rgba(0,0,0,0.1);}
+    button { padding:8px 15px; margin-top:10px; }
+  </style>
+</head>
+<body>
+
+  <h1>Teacher Tech Championship</h1>
+
+  <!-- Modul 1: Input Data -->
+  <div id="modul1" class="card">
+    <h2>Modul 1: Input Data</h2>
+    <label>Jumlah Sekolah: <input type="number" id="jumlahSekolah" min="1" value="2"></label>
+    <button onclick="buatFormSekolah()">Buat Form Sekolah</button>
+    <div id="daftarSekolah"></div>
+
+    <label>Jumlah Aspek Penilaian: <input type="number" id="jumlahAspek" min="1" value="2"></label>
+    <button onclick="buatFormAspek()">Buat Form Aspek</button>
+    <div id="daftarAspek"></div>
+
+    <label>Jumlah Juri: <input type="number" id="jumlahJuri" min="1" value="2"></label><br>
+    <button onclick="simpanKonfigurasi()">Simpan Konfigurasi</button>
+    <p id="peringatanBobot" class="warning"></p>
+  </div>
+
+  <!-- Modul 2: Penjurian -->
+  <div id="modul2" class="card hidden">
+    <h2>Modul 2: Penjurian</h2>
+    <label>Nama Juri: <input type="text" id="namaJuri"></label>
+    <button onclick="mulaiPenjurian()">Mulai</button>
+    <div id="formPenjurian"></div>
+    <div>
+      <h3>Keterangan Nilai:</h3>
+      <ul>
+        <li>100–90: Istimewa</li>
+        <li>89–80: Baik Sekali</li>
+        <li>79–70: Baik</li>
+        <li>69–60: Cukup</li>
+        <li>59–50: Kurang</li>
+        <li>&lt;49: Kurang Sekali</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Modul 3: Rekap -->
+  <div id="modul3" class="card hidden">
+    <h2>Modul 3: Rekap Penilaian</h2>
+    <button onclick="tampilkanRekap()">Tampilkan Rekap</button>
+    <div id="rekapTabel"></div>
+  </div>
+
+<script>
+let config = null;
+
+// ===== Modul 1 =====
+function buatFormSekolah() {
+  let jumlah = document.getElementById("jumlahSekolah").value;
+  let html = "<h3>Daftar Sekolah</h3>";
+  for (let i=0;i<jumlah;i++) {
+    html += `Sekolah ${i+1}: <input type="text" id="sekolah${i}" placeholder="Nama"> 
+             Wilayah: <input type="text" id="wilayah${i}" placeholder="Wilayah"><br>`;
+  }
+  document.getElementById("daftarSekolah").innerHTML = html;
+}
+
+function buatFormAspek() {
+  let jumlah = document.getElementById("jumlahAspek").value;
+  let html = "<h3>Daftar Aspek</h3><table><tr><th>Aspek</th><th>Bobot (%)</th></tr>";
+  for (let i=0;i<jumlah;i++) {
+    html += `<tr><td><input type="text" id="aspek${i}" placeholder="Nama Aspek"></td>
+             <td><input type="number" id="bobot${i}" min="0" max="100"></td></tr>`;
+  }
+  html += "</table>";
+  document.getElementById("daftarAspek").innerHTML = html;
+}
+
+function simpanKonfigurasi() {
+  let jumlahSekolah = document.getElementById("jumlahSekolah").value;
+  let sekolahs = [];
+  for (let i=0;i<jumlahSekolah;i++) {
+    sekolahs.push({nama: document.getElementById("sekolah"+i).value,
+                   wilayah: document.getElementById("wilayah"+i).value});
+  }
+  let jumlahAspek = document.getElementById("jumlahAspek").value;
+  let aspek = [];
+  let totalBobot = 0;
+  for (let i=0;i<jumlahAspek;i++) {
+    let nama = document.getElementById("aspek"+i).value;
+    let bobot = parseFloat(document.getElementById("bobot"+i).value);
+    totalBobot += bobot;
+    aspek.push({nama, bobot});
+  }
+  if (totalBobot !== 100) {
+    document.getElementById("peringatanBobot").innerText = "Total bobot harus 100%!";
+    return;
+  } else {
+    document.getElementById("peringatanBobot").innerText = "";
+  }
+  let jumlahJuri = document.getElementById("jumlahJuri").value;
+  config = {sekolahs, aspek, jumlahJuri};
+  localStorage.setItem("TTC_config", JSON.stringify(config));
+  alert("Konfigurasi tersimpan!");
+  document.getElementById("modul2").classList.remove("hidden");
+  document.getElementById("modul3").classList.remove("hidden");
+}
+
+// ===== Modul 2 =====
+function mulaiPenjurian() {
+  let namaJuri = document.getElementById("namaJuri").value;
+  if (!namaJuri) { alert("Masukkan nama juri!"); return; }
+  if (!config) { config = JSON.parse(localStorage.getItem("TTC_config")); }
+  let html = `<h3>Penilaian oleh ${namaJuri}</h3><table><tr><th>Sekolah</th>`;
+  config.aspek.forEach(a => html += `<th>${a.nama} (${a.bobot}%)</th>`);
+  html += "<th>Total</th></tr>";
+  config.sekolahs.forEach((s, idxS) => {
+    html += `<tr><td>${s.nama} (${s.wilayah})</td>`;
+    config.aspek.forEach((a, idxA) => {
+      html += `<td><input type="number" min="0" max="100" 
+                onchange="hitungTotal('${namaJuri}',${idxS})" 
+                id="nilai_${namaJuri}_${idxS}_${idxA}"></td>`;
+    });
+    html += `<td id="total_${namaJuri}_${idxS}">0</td></tr>`;
+  });
+  html += "</table><button onclick=\"simpanNilai('${namaJuri}')\">Simpan Nilai</button>";
+  document.getElementById("formPenjurian").innerHTML = html;
+}
+
+function hitungTotal(namaJuri, idxSekolah) {
+  let total = 0;
+  config.aspek.forEach((a, idxA) => {
+    let v = parseFloat(document.getElementById(`nilai_${namaJuri}_${idxSekolah}_${idxA}`).value) || 0;
+    total += v * (a.bobot/100);
+  });
+  document.getElementById(`total_${namaJuri}_${idxSekolah}`).innerText = total.toFixed(2);
+}
+
+function simpanNilai(namaJuri) {
+  let data = {namaJuri, nilai: []};
+  config.sekolahs.forEach((s, idxS) => {
+    let aspekNilai = {};
+    config.aspek.forEach((a, idxA) => {
+      aspekNilai[a.nama] = parseFloat(document.getElementById(`nilai_${namaJuri}_${idxS}_${idxA}`).value) || 0;
+    });
+    aspekNilai["total"] = parseFloat(document.getElementById(`total_${namaJuri}_${idxS}`).innerText);
+    data.nilai.push({sekolah: s.nama, nilai: aspekNilai});
+  });
+  localStorage.setItem("TTC_scores_"+namaJuri, JSON.stringify(data));
+  alert("Nilai juri tersimpan!");
+}
+
+// ===== Modul 3 =====
+function tampilkanRekap() {
+  if (!config) { config = JSON.parse(localStorage.getItem("TTC_config")); }
+  let html = "<table><tr><th>Sekolah</th>";
+  // Ambil nama juri
+  let juriKeys = [];
+  for (let i=0;i<localStorage.length;i++) {
+    let key = localStorage.key(i);
+    if (key.startsWith("TTC_scores_")) { juriKeys.push(key); }
+  }
+  let juriNames = juriKeys.map(k => k.replace("TTC_scores_",""));
+  juriNames.forEach(j => html += `<th>${j}</th>`);
+  html += "<th>Warning</th></tr>";
+
+  config.sekolahs.forEach((s, idxS) => {
+    let row = `<tr><td>${s.nama}</td>`;
+    let totals = [];
+    juriNames.forEach(j => {
+      let data = JSON.parse(localStorage.getItem("TTC_scores_"+j));
+      if (data) {
+        let nilaiSekolah = data.nilai.find(n => n.sekolah===s.nama);
+        let tot = nilaiSekolah? nilaiSekolah.nilai.total : 0;
+        totals.push(tot);
+        row += `<td>${tot}</td>`;
+      }
+    });
+    let warning = "";
+    if (totals.length>1) {
+      let avg = totals.reduce((a,b)=>a+b,0)/totals.length;
+      let variance = totals.reduce((a,b)=>a+(b-avg)**2,0)/totals.length;
+      let sd = Math.sqrt(variance);
+      if (sd>5) warning="⚠️ SD > 5";
+    }
+    row += `<td>${warning}</td></tr>`;
+    html += row;
+  });
+
+  html += "</table>";
+  document.getElementById("rekapTabel").innerHTML = html;
+}
+</script>
+</body>
+</html>
