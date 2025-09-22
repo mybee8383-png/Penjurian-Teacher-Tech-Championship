@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Teacher Tech Championship</title>
-  <!-- Tailwind CDN -->
+  <!-- Tailwind: tampil modern, cukup CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-50 text-slate-800">
@@ -90,7 +90,7 @@
           <button id="btn-save-config" class="rounded-md bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2">Simpan Konfigurasi</button>
           <button id="btn-reset" class="rounded-md border border-slate-300 hover:bg-slate-50 px-4 py-2">Reset Semua Data</button>
         </div>
-        <p class="text-xs text-slate-500 mt-2">Catatan: konfigurasi & nilai akan disimpan di <em>LocalStorage</em> agar bisa dilanjutkan nanti.</p>
+        <p class="text-xs text-slate-500 mt-2">Konfigurasi & nilai disimpan di <em>LocalStorage</em> agar bisa dilanjutkan nanti.</p>
       </div>
     </section>
 
@@ -132,28 +132,23 @@
   </div>
 
   <script>
-    // ------- Helpers
+    // ===== util sederhana =====
     const $ = (sel) => document.querySelector(sel);
-    const el = (html) => { const d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstChild; };
     const showToast = (msg, ok=true) => {
       const t = $('#toast'); t.classList.remove('hidden');
       t.className = "rounded-lg px-4 py-3 mb-4 text-sm " + (ok? "bg-emerald-50 border border-emerald-200 text-emerald-900" : "bg-rose-50 border border-rose-200 text-rose-900");
-      t.textContent = msg; setTimeout(()=> t.classList.add('hidden'), 2500);
+      t.textContent = msg; setTimeout(()=> t.classList.add('hidden'), 2200);
     };
     const getConfig = () => JSON.parse(localStorage.getItem('TTC_config') || 'null');
     const saveConfig = (cfg) => localStorage.setItem('TTC_config', JSON.stringify(cfg));
     const scoreKey = (juri) => `TTC_scores_${juri}`;
 
-    // ------- Tabs
-    const panels = {
-      config: $('#panel-config'),
-      judge:  $('#panel-judge'),
-      recap:  $('#panel-recap'),
-    };
+    // ===== tabs =====
+    const panels = { config: $('#panel-config'), judge: $('#panel-judge'), recap: $('#panel-recap') };
     const switchTab = (name) => {
       Object.values(panels).forEach(p => p.classList.add('hidden'));
       panels[name].classList.remove('hidden');
-      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('border-indigo-600','text-indigo-600'));
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('border-indigo-600','text-indigo-600'));
       if(name==='config') $('#tab-config').classList.add('border-indigo-600','text-indigo-600');
       if(name==='judge')  $('#tab-judge').classList.add('border-indigo-600','text-indigo-600');
       if(name==='recap')  $('#tab-recap').classList.add('border-indigo-600','text-indigo-600');
@@ -162,52 +157,74 @@
     $('#tab-judge').onclick  = ()=> switchTab('judge');
     $('#tab-recap').onclick  = ()=> switchTab('recap');
 
-    // ------- Modul 1: generate inputs
-    const renderSekolahInputs = (n) => {
-      const wrap = $('#daftarSekolah'); wrap.innerHTML = '';
-      for (let i=0;i<n;i++){
-        wrap.appendChild(el(`
-          <div class="grid grid-cols-2 gap-2 bg-slate-50 border border-slate-200 rounded-lg p-3">
-            <label class="text-sm">Nama Sekolah
-              <input id="sekolah${i}" type="text" class="mt-1 w-full rounded-md border-slate-300 focus:border-indigo-500 focus:ring-indigo-500" placeholder="Sekolah ${i+1}">
-            </label>
-            <label class="text-sm">Wilayah
-              <input id="wilayah${i}" type="text" class="mt-1 w-full rounded-md border-slate-300 focus:border-indigo-500 focus:ring-indigo-500" placeholder="Wilayah">
-            </label>
-          </div>`));
+    // ===== modul 1: sekolah =====
+    function renderSekolahInputs(n){
+      const wrap = $('#daftarSekolah'); wrap.innerHTML='';
+      for(let i=0;i<n;i++){
+        const card = document.createElement('div');
+        card.className = "grid grid-cols-2 gap-2 bg-slate-50 border border-slate-200 rounded-lg p-3";
+        card.innerHTML = `
+          <label class="text-sm">Nama Sekolah
+            <input id="sekolah${i}" type="text" class="mt-1 w-full rounded-md border-slate-300 focus:border-indigo-500 focus:ring-indigo-500" placeholder="Sekolah ${i+1}">
+          </label>
+          <label class="text-sm">Wilayah
+            <input id="wilayah${i}" type="text" class="mt-1 w-full rounded-md border-slate-300 focus:border-indigo-500 focus:ring-indigo-500" placeholder="Wilayah">
+          </label>`;
+        wrap.appendChild(card);
       }
-    };
-    const renderAspekInputs = (n) => {
-      const tbody = $('#tbodyAspek'); tbody.innerHTML = '';
-      for (let i=0;i<n;i++){
-        const row = el(`
-          <tr>
-            <td class="px-3 py-2">${i+1}</td>
-            <td class="px-3 py-2"><input id="aspek${i}" type="text" placeholder="Aspek ${i+1}" class="w-full rounded-md border-slate-300 focus:border-indigo-500 focus:ring-indigo-500"/></td>
-            <td class="px-3 py-2"><input id="bobot${i}" type="number" min="0" max="100" step="1" class="w-28 rounded-md border-slate-300 focus:border-indigo-500 focus:ring-indigo-500"/></td>
-          </tr>`);
-        tbody.appendChild(row);
-      }
-      // listen changes for total weight
-      tbody.querySelectorAll('input[type=number]').forEach(inp => inp.addEventListener('input', updateTotalBobot));
-      updateTotalBobot();
-    };
-    const updateTotalBobot = () => {
-      const n = parseInt($('#jumlahAspek').value || '0', 10);
-      let sum = 0;
-      for(let i=0;i<n;i++){ sum += parseFloat($('#bobot'+i)?.value || '0'); }
-      $('#totalBobot').textContent = (isNaN(sum)?0:sum);
-      const warn = $('#warnBobot');
-      warn.textContent = (sum===100? '✓ valid' : 'Total harus 100%');
-      warn.className = 'ml-2 text-xs font-medium ' + (sum===100?'text-emerald-700':'text-rose-700');
-    };
-
-    // generate default forms
+    }
     $('#btn-gen-sekolah').onclick = ()=> renderSekolahInputs(parseInt($('#jumlahSekolah').value||'0',10));
-    $('#btn-gen-aspek').onclick   = ()=> renderAspekInputs(parseInt($('#jumlahAspek').value||'0',10));
 
-    // load config if exists
-    (function initConfig(){
+    // ===== modul 1: aspek =====
+    function renderAspekInputs(n){
+      const tbody = $('#tbodyAspek'); tbody.innerHTML='';
+      for(let i=0;i<n;i++){
+        const tr = document.createElement('tr');
+
+        const tdNo = document.createElement('td');
+        tdNo.className = "px-3 py-2";
+        tdNo.textContent = (i+1);
+
+        const tdNama = document.createElement('td');
+        tdNama.className = "px-3 py-2";
+        const inpNama = document.createElement('input');
+        inpNama.id = `aspek${i}`;
+        inpNama.type = 'text';
+        inpNama.placeholder = `Aspek ${i+1}`;
+        inpNama.className = "w-full rounded-md border-slate-300 focus:border-indigo-500 focus:ring-indigo-500";
+        tdNama.appendChild(inpNama);
+
+        const tdBobot = document.createElement('td');
+        tdBobot.className = "px-3 py-2";
+        const inpBobot = document.createElement('input');
+        inpBobot.id = `bobot${i}`;
+        inpBobot.type = 'number';
+        inpBobot.min = '0'; inpBobot.max = '100'; inpBobot.step = '1';
+        inpBobot.className = "w-28 rounded-md border-slate-300 focus:border-indigo-500 focus:ring-indigo-500";
+        inpBobot.addEventListener('input', updateTotalBobot);
+        tdBobot.appendChild(inpBobot);
+
+        tr.appendChild(tdNo); tr.appendChild(tdNama); tr.appendChild(tdBobot);
+        tbody.appendChild(tr);
+      }
+      updateTotalBobot();
+    }
+    function updateTotalBobot(){
+      const n = parseInt($('#jumlahAspek').value||'0',10);
+      let sum = 0;
+      for(let i=0;i<n;i++){
+        const v = parseFloat($('#bobot'+i)?.value || '0');
+        sum += isNaN(v) ? 0 : v;
+      }
+      $('#totalBobot').textContent = sum;
+      const w = $('#warnBobot');
+      w.textContent = (sum===100? '✓ valid' : 'Total harus 100%');
+      w.className = 'ml-2 text-xs font-medium ' + (sum===100? 'text-emerald-700' : 'text-rose-700');
+    }
+    $('#btn-gen-aspek').onclick = ()=> renderAspekInputs(parseInt($('#jumlahAspek').value||'0',10));
+
+    // ===== load config (jika sudah ada) =====
+    (function init(){
       const cfg = getConfig();
       if(cfg){
         $('#jumlahSekolah').value = cfg.sekolahs.length;
@@ -222,13 +239,12 @@
         $('#jumlahJuri').value = cfg.jumlahJuri || 1;
         showToast('Konfigurasi dimuat dari LocalStorage');
       }else{
-        // first-time defaults
         renderSekolahInputs(parseInt($('#jumlahSekolah').value,10));
         renderAspekInputs(parseInt($('#jumlahAspek').value,10));
       }
     })();
 
-    // save config
+    // ===== simpan config =====
     $('#btn-save-config').onclick = ()=>{
       const nSek = parseInt($('#jumlahSekolah').value||'0',10);
       const sekolahs = [];
@@ -255,26 +271,25 @@
       showToast('Konfigurasi tersimpan ✓');
     };
 
-    // reset all
+    // ===== reset semua =====
     $('#btn-reset').onclick = ()=>{
       if(!confirm('Hapus semua data (config & nilai juri)?')) return;
-      const keys = Object.keys(localStorage);
-      keys.forEach(k=>{
-        if(k.startsWith('TTC_')) localStorage.removeItem(k);
-      });
+      Object.keys(localStorage).forEach(k=>{ if(k.startsWith('TTC_')) localStorage.removeItem(k); });
       location.reload();
     };
 
-    // ------- Modul 2: judging
+    // ===== modul 2: penjurian =====
     $('#btn-start-judge').onclick = ()=>{
       const cfg = getConfig();
       if(!cfg){ showToast('Konfigurasi belum disimpan', false); switchTab('config'); return; }
       const nama = $('#namaJuri').value.trim();
       if(!nama){ showToast('Nama juri wajib diisi', false); return; }
 
-      // Render table
-      const wrap = $('#formPenjurian'); wrap.innerHTML='';
-      const tbl = el(`<div class="overflow-x-auto"><table class="min-w-full text-sm border border-slate-200 rounded-lg overflow-hidden">
+      const wrap = $('#formPenjurian'); wrap.innerHTML = '';
+      // buat tabel penilaian
+      const table = document.createElement('table');
+      table.className = "min-w-full text-sm border border-slate-200 rounded-lg overflow-hidden";
+      table.innerHTML = `
         <thead class="bg-slate-50">
           <tr>
             <th class="px-3 py-2 text-left">Sekolah</th>
@@ -282,85 +297,105 @@
             <th class="px-3 py-2 text-left">Total</th>
           </tr>
         </thead>
-        <tbody id="tbodyJudge" class="[&_tr:nth-child(even)]:bg-slate-50"></tbody>
-      </table></div>
-      <div class="mt-3 flex gap-3">
-        <button id="btn-save-judge" class="rounded-md bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2">Simpan Nilai</button>
-        <span class="text-xs text-slate-500">Autosave aktif saat Anda mengetik.</span>
-      </div>`);
-      wrap.appendChild(tbl);
+        <tbody id="tbodyJudge" class="[&_tr:nth-child(even)]:bg-slate-50"></tbody>`;
+      const box = document.createElement('div');
+      box.className = "overflow-x-auto";
+      box.appendChild(table);
+      wrap.appendChild(box);
 
-      const body = tbl.querySelector('#tbodyJudge');
-
-      // load draft if any
+      const body = table.querySelector('#tbodyJudge');
       const draft = JSON.parse(localStorage.getItem(scoreKey(nama))||'null');
 
       cfg.sekolahs.forEach((s, idxS)=>{
-        const row = el(`<tr>
-          <td class="px-3 py-2 whitespace-nowrap">${s.nama} <span class="text-xs text-slate-500">(${s.wilayah})</span></td>
-          ${cfg.aspek.map((a, idxA)=>`
-            <td class="px-3 py-2">
-              <input type="number" min="0" max="100" step="1"
-                     class="w-24 rounded-md border-slate-300 focus:border-indigo-500 focus:ring-indigo-500"
-                     id="nilai_${idxS}_${idxA}">
-              <div class="text-[11px] text-slate-500 mt-1" id="pred_${idxS}_${idxA}"></div>
-            </td>`).join('')}
-          <td class="px-3 py-2 font-medium" id="total_${idxS}">0.00</td>
-        </tr>`);
-        body.appendChild(row);
+        const tr = document.createElement('tr');
 
-        // populate from draft
-        if(draft && draft.nilai){
-          const rec = draft.nilai.find(n => n.sekolah===s.nama);
-          if(rec){
-            cfg.aspek.forEach((a,idxA)=>{
-              const v = rec.nilai[a.nama] ?? '';
-              const inp = $(`#nilai_${idxS}_${idxA}`); inp.value = v;
-            });
-            $(`#total_${idxS}`).textContent = (rec.nilai.total ?? 0).toFixed(2);
-          }
-        }
+        const tdSek = document.createElement('td');
+        tdSek.className = "px-3 py-2 whitespace-nowrap";
+        tdSek.innerHTML = `${s.nama} <span class="text-xs text-slate-500">(${s.wilayah})</span>`;
+        tr.appendChild(tdSek);
 
-        // listeners
         cfg.aspek.forEach((a, idxA)=>{
-          $(`#nilai_${idxS}_${idxA}`).addEventListener('input', ()=>{
-            // clamp 0..100
-            let v = parseFloat($(`#nilai_${idxS}_${idxA}`).value || '0');
+          const td = document.createElement('td');
+          td.className = "px-3 py-2";
+          const inp = document.createElement('input');
+          inp.type = 'number'; inp.min='0'; inp.max='100'; inp.step='1';
+          inp.id = `nilai_${idxS}_${idxA}`;
+          inp.className = "w-24 rounded-md border-slate-300 focus:border-indigo-500 focus:ring-indigo-500";
+          const pred = document.createElement('div');
+          pred.id = `pred_${idxS}_${idxA}`;
+          pred.className = "text-[11px] text-slate-500 mt-1";
+
+          // populate draft
+          if(draft && draft.nilai){
+            const rec = draft.nilai.find(n => n.sekolah===s.nama);
+            if(rec && rec.nilai[a.nama] !== undefined){
+              inp.value = rec.nilai[a.nama];
+              pred.textContent = kategori(+inp.value);
+            }
+          }
+
+          // on input
+          inp.addEventListener('input', ()=>{
+            let v = parseFloat(inp.value || '0');
             if(v<0) v=0; if(v>100) v=100;
-            $(`#nilai_${idxS}_${idxA}`).value = v;
-
-            // kategori label
-            const pred = (v>=90)?'Istimewa':(v>=80)?'Baik Sekali':(v>=70)?'Baik':(v>=60)?'Cukup':(v>=50)?'Kurang':'Kurang Sekali';
-            $(`#pred_${idxS}_${idxA}`).textContent = pred;
-
-            // recompute row total
-            let total=0;
-            cfg.aspek.forEach((aa,ii)=>{
-              const val = parseFloat($(`#nilai_${idxS}_${ii}`).value || '0');
-              total += val*(aa.bobot/100);
-            });
-            $(`#total_${idxS}`).textContent = total.toFixed(2);
-
-            // autosave
-            saveJudge(nama, false);
+            inp.value = v;
+            pred.textContent = kategori(v);
+            hitungTotalBaris(cfg, idxS);
+            saveJudge(nama, false, cfg);
           });
+
+          td.appendChild(inp); td.appendChild(pred);
+          tr.appendChild(td);
         });
+
+        const tdTot = document.createElement('td');
+        tdTot.className = "px-3 py-2 font-medium";
+        tdTot.id = `total_${idxS}`;
+        const totDraft = draft && draft.nilai ? draft.nilai.find(n=>n.sekolah===s.nama)?.nilai.total : 0;
+        tdTot.textContent = (totDraft? totDraft : 0).toFixed(2);
+        tr.appendChild(tdTot);
+
+        body.appendChild(tr);
       });
 
-      // save button
-      $('#btn-save-judge').onclick = ()=> saveJudge(nama, true);
+      // tombol simpan
+      const actions = document.createElement('div');
+      actions.className = "mt-3 flex gap-3";
+      const btnSave = document.createElement('button');
+      btnSave.id = "btn-save-judge";
+      btnSave.className = "rounded-md bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2";
+      btnSave.textContent = "Simpan Nilai";
+      btnSave.onclick = ()=> saveJudge(nama, true, cfg);
+      actions.appendChild(btnSave);
+      const note = document.createElement('span');
+      note.className = "text-xs text-slate-500";
+      note.textContent = "Autosave aktif saat Anda mengetik.";
+      actions.appendChild(note);
+      wrap.appendChild(actions);
+
       switchTab('judge');
       showToast(`Form penjurian untuk ${nama} siap`);
     };
 
-    function saveJudge(nama, notify){
-      const cfg = getConfig(); if(!cfg) return;
+    function kategori(v){
+      return (v>=90)?'Istimewa':(v>=80)?'Baik Sekali':(v>=70)?'Baik':(v>=60)?'Cukup':(v>=50)?'Kurang':'Kurang Sekali';
+    }
+    function hitungTotalBaris(cfg, idxS){
+      let total = 0;
+      cfg.aspek.forEach((a, idxA)=>{
+        const v = parseFloat(($('#nilai_'+idxS+'_'+idxA)?.value)||'0');
+        total += v*(a.bobot/100);
+      });
+      $('#total_'+idxS).textContent = total.toFixed(2);
+    }
+    function saveJudge(nama, notify, cfg){
+      cfg = cfg || getConfig(); if(!cfg) return;
       const data = { namaJuri: nama, nilai: [] };
       cfg.sekolahs.forEach((s, idxS)=>{
         const pack = { sekolah: s.nama, nilai: {} };
         let total = 0;
         cfg.aspek.forEach((a, idxA)=>{
-          const v = parseFloat($(`#nilai_${idxS}_${idxA}`)?.value || '0');
+          const v = parseFloat(($('#nilai_'+idxS+'_'+idxA)?.value)||'0');
           pack.nilai[a.nama] = v;
           total += v*(a.bobot/100);
         });
@@ -371,7 +406,7 @@
       if(notify) showToast('Nilai juri tersimpan ✓');
     }
 
-    // ------- Modul 3: recap
+    // ===== modul 3: rekap =====
     $('#btn-show-recap').onclick = ()=>{
       const cfg = getConfig();
       if(!cfg){ showToast('Konfigurasi belum ada', false); switchTab('config'); return; }
@@ -383,25 +418,26 @@
       }
       if(juriNames.length===0){ showToast('Belum ada nilai juri', false); return; }
 
-      // build table
       const wrap = $('#rekapTabel'); wrap.innerHTML='';
-      const tbl = el(`<div class="overflow-x-auto">
-        <table class="min-w-full text-sm border border-slate-200 rounded-lg overflow-hidden">
-          <thead class="bg-slate-50">
-            <tr>
-              <th class="px-3 py-2 text-left">Sekolah</th>
-              ${juriNames.map(n=>`<th class="px-3 py-2 text-left">${n}</th>`).join('')}
-              <th class="px-3 py-2 text-left">Rata-rata</th>
-              <th class="px-3 py-2 text-left">SD</th>
-              <th class="px-3 py-2 text-left">Warning</th>
-            </tr>
-          </thead>
-          <tbody id="tbodyRecap" class="[&_tr:nth-child(even)]:bg-slate-50"></tbody>
-        </table>
-      </div>`);
-      wrap.appendChild(tbl);
+      const table = document.createElement('table');
+      table.className = "min-w-full text-sm border border-slate-200 rounded-lg overflow-hidden";
+      table.innerHTML = `
+        <thead class="bg-slate-50">
+          <tr>
+            <th class="px-3 py-2 text-left">Sekolah</th>
+            ${juriNames.map(n=>`<th class="px-3 py-2 text-left">${n}</th>`).join('')}
+            <th class="px-3 py-2 text-left">Rata-rata</th>
+            <th class="px-3 py-2 text-left">SD</th>
+            <th class="px-3 py-2 text-left">Warning</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyRecap" class="[&_tr:nth-child(even)]:bg-slate-50"></tbody>`;
+      const box = document.createElement('div');
+      box.className = "overflow-x-auto";
+      box.appendChild(table);
+      wrap.appendChild(box);
 
-      const body = tbl.querySelector('#tbodyRecap');
+      const body = table.querySelector('#tbodyRecap');
 
       cfg.sekolahs.forEach((s)=>{
         const totals = juriNames.map(n=>{
@@ -415,24 +451,25 @@
         const sd = Math.sqrt(variance);
         const warn = sd>5 ? '⚠️ SD > 5' : '';
 
-        const tr = el(`<tr class="${sd>5?'bg-amber-50':''}">
+        const tr = document.createElement('tr');
+        if(sd>5) tr.className = "bg-amber-50";
+
+        tr.innerHTML = `
           <td class="px-3 py-2 whitespace-nowrap">${s.nama}</td>
           ${totals.map(t=>`<td class="px-3 py-2">${t.toFixed(2)}</td>`).join('')}
           <td class="px-3 py-2 font-medium">${avg.toFixed(2)}</td>
           <td class="px-3 py-2">${sd.toFixed(2)}</td>
-          <td class="px-3 py-2">${warn}</td>
-        </tr>`);
+          <td class="px-3 py-2">${warn}</td>`;
         body.appendChild(tr);
       });
 
       switchTab('recap');
     };
 
-    // clear judges scores only
+    // hapus semua nilai juri
     $('#btn-clear-judge').onclick = ()=>{
       if(!confirm('Hapus semua nilai juri (config tetap ada)?')) return;
-      const keys = Object.keys(localStorage);
-      keys.forEach(k=>{ if(k.startsWith('TTC_scores_')) localStorage.removeItem(k); });
+      Object.keys(localStorage).forEach(k=>{ if(k.startsWith('TTC_scores_')) localStorage.removeItem(k); });
       $('#rekapTabel').innerHTML = '';
       showToast('Semua nilai juri dihapus');
     };
